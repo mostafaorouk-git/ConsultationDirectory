@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Consultant Directory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F5F8FC;
+    --surface: #FFFFFF;
+    --border: #DDE4EE;
+    --text-primary: #0E1B2E;
+    --text-secondary: #5A6A80;
+    --text-tertiary: #94A3B8;
+    --accent: #1A5DBA;
+    --accent-light: #EAF1FB;
+    --accent-mid: #378ADD;
+    --success: #1D9E75;
+    --success-light: #E1F5EE;
+    --warning: #BA7517;
+    --warning-light: #FAEEDA;
+    --error: #A32D2D;
+    --error-light: #FCEBEB;
+    --purple: #534AB7;
+    --purple-light: #EEEDFE;
+  }
+
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; }
+
+  /* ── Header ── */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-brand { display: flex; align-items: center; gap: 10px; }
+  .header-icon {
+    width: 36px; height: 36px; background: var(--accent); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .header-icon svg { width: 20px; height: 20px; fill: white; }
+  .brand-name { font-family: 'Sora', sans-serif; font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+  .brand-sub { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .sync-status {
+    display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--text-secondary);
+    background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 5px 14px;
+  }
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-tertiary); }
+  .sync-dot.live { background: var(--success); animation: pulse 2s ease-in-out infinite; }
+  .sync-dot.error { background: var(--error); }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .btn-refresh {
+    display: flex; align-items: center; gap: 7px; background: var(--accent); color: white;
+    border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-refresh:hover { background: #1349A0; }
+  .btn-refresh svg { width: 15px; height: 15px; fill: white; }
+  .btn-refresh.spinning svg { animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Data Source Panel ── */
+  .source-panel {
+    margin: 1.5rem 2rem 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .source-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-secondary); font-weight: 500; }
+  .source-url-input {
+    flex: 1; min-width: 260px; padding: 7px 12px; border: 1px solid var(--border); border-radius: 7px;
+    font-size: 13px; font-family: monospace; color: var(--text-primary); background: var(--bg); outline: none;
+  }
+  .source-url-input:focus { border-color: var(--accent-mid); }
+  .btn-load {
+    padding: 7px 16px; background: var(--accent-light); color: var(--accent);
+    border: 1px solid #B5D4F4; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer;
+  }
+  .btn-load:hover { background: #D0E6F9; }
+  .source-hint { font-size: 12px; color: var(--text-tertiary); width: 100%; }
+
+  /* ── Controls ── */
+  .controls { padding: 1.25rem 2rem; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .search-wrap { position: relative; flex: 1; min-width: 220px; max-width: 360px; }
+  .search-wrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; fill: var(--text-secondary); pointer-events: none; }
+  .search-input {
+    width: 100%; padding: 9px 12px 9px 34px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 14px; font-family: 'Inter', sans-serif; background: var(--surface); color: var(--text-primary); outline: none;
+  }
+  .search-input:focus { border-color: var(--accent-mid); }
+  .filter-select {
+    padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px;
+    font-family: 'Inter', sans-serif; background: var(--surface); color: var(--text-primary); cursor: pointer; outline: none;
+    max-width: 200px;
+  }
+  .stats-row { margin-left: auto; display: flex; gap: 20px; }
+  .stat-chip { text-align: center; font-size: 12px; color: var(--text-secondary); }
+  .stat-chip strong { display: block; font-size: 18px; font-weight: 600; color: var(--text-primary); line-height: 1.2; }
+
+  .last-updated { font-size: 12px; color: var(--text-secondary); padding: 0 2rem 1rem; }
+
+  /* ── Grid ── */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; padding: 0 2rem 3rem; }
+
+  .consultant-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 1.25rem; display: flex; flex-direction: column; gap: 12px;
+    transition: box-shadow 0.15s; cursor: pointer;
+  }
+  .consultant-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.07); }
+  .card-top { display: flex; align-items: center; gap: 12px; }
+  .avatar {
+    width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 600; flex-shrink: 0;
+  }
+  .consultant-name { font-size: 15px; font-weight: 600; line-height: 1.3; }
+  .consultant-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .specialty-badge {
+    display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 500;
+    padding: 4px 10px; border-radius: 20px; width: fit-content;
+  }
+  .subspecialty-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .subspecialty-pill {
+    font-size: 11.5px; color: var(--text-secondary); background: var(--bg);
+    border: 1px solid var(--border); padding: 2px 9px; border-radius: 14px;
+  }
+  .card-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border-top: 1px solid var(--border); padding-top: 12px; }
+  .meta-item { font-size: 12px; }
+  .meta-label { color: var(--text-secondary); margin-bottom: 2px; }
+  .meta-value { font-weight: 500; color: var(--text-primary); font-size: 13px; }
+  .card-footer { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--text-secondary); }
+  .view-more { color: var(--accent); font-weight: 500; display: flex; align-items: center; gap: 3px; }
+  .view-more svg { width: 13px; height: 13px; fill: var(--accent); }
+
+  /* ── Empty / Loading States ── */
+  .state-box { grid-column: 1 / -1; text-align: center; padding: 4rem 2rem; color: var(--text-secondary); }
+  .state-box svg { width: 48px; height: 48px; fill: #CBD5E1; margin-bottom: 16px; }
+  .state-box h3 { font-size: 16px; font-weight: 500; color: var(--text-primary); margin-bottom: 6px; }
+  .state-box p { font-size: 14px; max-width: 420px; margin: 0 auto; line-height: 1.6; }
+
+  /* ── Modal (full profile) ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(14,27,46,0.45); display: none;
+    align-items: flex-start; justify-content: center; z-index: 1000; padding: 3rem 1.5rem; overflow-y: auto;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: var(--surface); border-radius: 14px; max-width: 640px; width: 100%;
+    padding: 1.75rem; position: relative; max-height: calc(100vh - 6rem); overflow-y: auto;
+  }
+  .modal-close {
+    position: absolute; top: 18px; right: 18px; width: 30px; height: 30px; border-radius: 50%;
+    border: 1px solid var(--border); background: var(--bg); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal-close svg { width: 14px; height: 14px; fill: var(--text-secondary); }
+  .modal-header { display: flex; align-items: center; gap: 14px; margin-bottom: 1.25rem; padding-right: 2rem; }
+  .modal-avatar {
+    width: 58px; height: 58px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-family: 'Sora', sans-serif; font-size: 19px; font-weight: 600; flex-shrink: 0;
+  }
+  .modal-name { font-family: 'Sora', sans-serif; font-size: 19px; font-weight: 700; }
+  .modal-section { margin-bottom: 1.25rem; }
+  .modal-section-title {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-secondary);
+    font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+  }
+  .schedule-row {
+    display: grid; grid-template-columns: 1.4fr 1fr 0.7fr 0.7fr; gap: 8px; padding: 8px 10px;
+    background: var(--bg); border-radius: 8px; font-size: 13px; margin-bottom: 6px; align-items: center;
+  }
+  .schedule-row.head { background: transparent; font-size: 11px; color: var(--text-tertiary); padding: 0 10px; font-weight: 500; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+  .info-item { font-size: 13px; }
+  .info-label { color: var(--text-secondary); font-size: 11.5px; margin-bottom: 2px; }
+  .info-value { font-weight: 500; }
+  .yn-badge {
+    display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500;
+    padding: 2px 9px; border-radius: 12px;
+  }
+  .yn-yes { background: var(--success-light); color: #085041; }
+  .yn-no { background: var(--error-light); color: #791F1F; }
+  .yn-unknown { background: #F1EFE8; color: #5F5E5A; }
+  .notes-box { font-size: 13px; color: var(--text-secondary); background: var(--bg); border-radius: 8px; padding: 10px 12px; line-height: 1.6; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; background: #1A2335; color: white; padding: 12px 18px;
+    border-radius: 10px; font-size: 13.5px; display: flex; align-items: center; gap: 10px;
+    opacity: 0; transform: translateY(12px); transition: all 0.25s; z-index: 999; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast svg { width: 16px; height: 16px; fill: #5DCAA5; }
+
+  @media (max-width: 640px) {
+    .schedule-row { grid-template-columns: 1fr 1fr; }
+    .info-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-brand">
+    <div class="header-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-8v4h4l-5 8z"/></svg>
+    </div>
+    <div>
+      <div class="brand-name">Consultant Directory</div>
+      <div class="brand-sub">Live from Excel via Power Query</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="sync-status">
+      <div class="sync-dot" id="syncDot"></div>
+      <span id="syncLabel">Not connected</span>
+    </div>
+    <button class="btn-refresh" id="refreshBtn" onclick="loadFromUrl()">
+      <svg id="refreshIcon" viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+      Refresh
+    </button>
+  </div>
+</header>
+
+<div class="source-panel">
+  <span class="source-label">Data source</span>
+  <input class="source-url-input" id="csvUrl" type="url"
+    placeholder="Paste your published Excel/Power Query CSV URL here" />
+  <button class="btn-load" onclick="loadFromUrl()">Connect</button>
+  <span class="source-hint">Publish your Excel sheet to the web as CSV (or expose it via Power Query), then paste the link here. The page reads your column headers automatically and refreshes every 60 seconds.</span>
+</div>
+
+<div class="controls">
+  <div class="search-wrap">
+    <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+    <input class="search-input" id="searchInput" placeholder="Search by name or specialty…" oninput="renderCards()" />
+  </div>
+  <select class="filter-select" id="filterSpecialty" onchange="renderCards()">
+    <option value="">All specialties</option>
+  </select>
+  <select class="filter-select" id="filterLocation" onchange="renderCards()">
+    <option value="">All locations</option>
+  </select>
+  <div class="stats-row">
+    <div class="stat-chip"><strong id="statTotal">0</strong>Consultants</div>
+    <div class="stat-chip"><strong id="statSpecialties">0</strong>Specialties</div>
+    <div class="stat-chip"><strong id="statLocations">0</strong>Locations</div>
+  </div>
+</div>
+
+<div class="last-updated" id="lastUpdated"></div>
+
+<div class="grid" id="grid">
+  <div class="state-box">
+    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+    <h3>No data connected</h3>
+    <p>Paste your published Excel CSV URL into the data source field above and click Connect to load consultant profiles.</p>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOnBg(event)">
+  <div class="modal-box" id="modalBox"></div>
+</div>
+
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+  <span id="toastMsg">Data refreshed successfully</span>
+</div>
+
+<script>
+  /* ── Schema definition (mirrors the Excel sheet's columns exactly) ── */
+  const SCHEDULE_SLOTS = 8;
+  const YES_NO_FIELDS = [
+    'Goes to BPS?', 'Does the consultant see Peads at BPS', 'Mandatory Referral Letter Before Booking?',
+    'Can Be Called Out of Clinic Hours for Urgent Care?', 'Can Do Telephone Consultations?',
+    'Can Do Home Visits?', 'Can Contact Centre Book Directly?', 'Do We Handle NHS Work?',
+    'Does the Consultant Need to Review the Letters?'
+  ];
+
+  const avatarColors = [
+    { bg: '#EAF1FB', color: '#185FA5' }, { bg: '#E1F5EE', color: '#0F6E56' },
+    { bg: '#EEEDFE', color: '#3C3489' }, { bg: '#FBEAF0', color: '#72243E' },
+    { bg: '#FAECE7', color: '#712B13' }, { bg: '#FAEEDA', color: '#633806' },
+    { bg: '#FCEBEB', color: '#791F1F' }, { bg: '#EAF3DE', color: '#27500A' },
+  ];
+  const specialtyPalette = [
+    { bg: '#FCEBEB', color: '#A32D2D' }, { bg: '#EEEDFE', color: '#3C3489' },
+    { bg: '#FAEEDA', color: '#633806' }, { bg: '#E1F5EE', color: '#085041' },
+    { bg: '#FBEAF0', color: '#72243E' }, { bg: '#E6F1FB', color: '#0C447C' },
+    { bg: '#EAF3DE', color: '#27500A' }, { bg: '#FAECE7', color: '#712B13' },
+  ];
+  const specialtyColorMap = {};
+  function colorForSpecialty(name) {
+    if (!specialtyColorMap[name]) {
+      const idx = Object.keys(specialtyColorMap).length % specialtyPalette.length;
+      specialtyColorMap[name] = specialtyPalette[idx];
+    }
+    return specialtyColorMap[name];
+  }
+
+  let allConsultants = [];
+  let autoRefreshInterval = null;
+
+  /* ── CSV parser (handles quoted commas/newlines) ── */
+  function parseCSV(text) {
+    const rows = [];
+    let row = [], field = '', inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i], next = text[i + 1];
+      if (inQuotes) {
+        if (c === '"' && next === '"') { field += '"'; i++; }
+        else if (c === '"') { inQuotes = false; }
+        else { field += c; }
+      } else {
+        if (c === '"') { inQuotes = true; }
+        else if (c === ',') { row.push(field); field = ''; }
+        else if (c === '\n' || c === '\r') {
+          if (c === '\r' && next === '\n') i++;
+          row.push(field); field = '';
+          if (row.some(f => f.trim() !== '')) rows.push(row);
+          row = [];
+        } else { field += c; }
+      }
+    }
+    if (field.length || row.length) { row.push(field); if (row.some(f => f.trim() !== '')) rows.push(row); }
+    if (rows.length < 2) return [];
+
+    const headers = rows[0].map(h => h.trim());
+    return rows.slice(1).map((cols, idx) => {
+      const obj = { _id: idx };
+      headers.forEach((h, i) => { obj[h] = (cols[i] || '').trim(); });
+      return obj;
+    }).filter(d => (d['Consultant Name'] || '').trim() !== '');
+  }
+
+  /* ── Load from URL ── */
+  async function loadFromUrl() {
+    const url = document.getElementById('csvUrl').value.trim();
+    if (!url) { showToast('Please enter a CSV URL first', true); return; }
+    setRefreshing(true);
+    try {
+      const response = await fetch(url, { cache: 'no-store' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const text = await response.text();
+      allConsultants = parseCSV(text);
+      populateFilters();
+      renderCards();
+      updateTimestamp();
+      setSyncStatus('live');
+      showToast(`Loaded ${allConsultants.length} consultant record(s)`);
+      startAutoRefresh();
+    } catch (e) {
+      showToast('Could not fetch data — check the URL and sharing settings', true);
+      setSyncStatus('error');
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
+  /* ── Filters ── */
+  function populateFilters() {
+    const specSel = document.getElementById('filterSpecialty');
+    const locSel  = document.getElementById('filterLocation');
+
+    const specialties = [...new Set(allConsultants.map(d => d['Specialty']).filter(Boolean))].sort();
+    specSel.innerHTML = '<option value="">All specialties</option>' +
+      specialties.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+
+    const locationsSet = new Set();
+    allConsultants.forEach(d => {
+      for (let n = 1; n <= SCHEDULE_SLOTS; n++) {
+        const loc = d[`Location ${n}`];
+        if (loc) locationsSet.add(loc);
+      }
+    });
+    const locations = [...locationsSet].sort();
+    locSel.innerHTML = '<option value="">All locations</option>' +
+      locations.map(l => `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('');
+  }
+
+  /* ── Render grid ── */
+  function renderCards() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const spec   = document.getElementById('filterSpecialty').value;
+    const loc    = document.getElementById('filterLocation').value;
+    const grid   = document.getElementById('grid');
+
+    const filtered = allConsultants.filter(d => {
+      const name = (d['Consultant Name'] || '').toLowerCase();
+      const specialty = d['Specialty'] || '';
+      const matchSearch = !search || name.includes(search) || specialty.toLowerCase().includes(search);
+      const matchSpec = !spec || specialty === spec;
+      const matchLoc = !loc || getLocations(d).includes(loc);
+      return matchSearch && matchSpec && matchLoc;
+    });
+
+    document.getElementById('statTotal').textContent = allConsultants.length;
+    document.getElementById('statSpecialties').textContent = new Set(allConsultants.map(d => d['Specialty']).filter(Boolean)).size;
+    const allLocs = new Set();
+    allConsultants.forEach(d => getLocations(d).forEach(l => allLocs.add(l)));
+    document.getElementById('statLocations').textContent = allLocs.size;
+
+    if (!allConsultants.length) {
+      grid.innerHTML = emptyState('No data connected', 'Paste your published Excel CSV URL into the data source field above and click Connect to load consultant profiles.');
+      return;
+    }
+    if (!filtered.length) {
+      grid.innerHTML = emptyState('No results', 'Try adjusting your search or filter criteria.');
+      return;
+    }
+
+    grid.innerHTML = filtered.map((d, i) => buildCard(d, i)).join('');
+  }
+
+  function emptyState(title, msg) {
+    return `<div class="state-box">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+      <h3>${title}</h3><p>${msg}</p></div>`;
+  }
+
+  function getLocations(d) {
+    const out = [];
+    for (let n = 1; n <= SCHEDULE_SLOTS; n++) { if (d[`Location ${n}`]) out.push(d[`Location ${n}`]); }
+    return out;
+  }
+  function getSchedule(d) {
+    const out = [];
+    for (let n = 1; n <= SCHEDULE_SLOTS; n++) {
+      const location = d[`Location ${n}`], day = d[`Day / Schedule ${n}`], tin = d[`Time In ${n}`], tout = d[`Time Out ${n}`];
+      if (location || day || tin || tout) out.push({ location, day, tin, tout });
+    }
+    return out;
+  }
+
+  function buildCard(d, i) {
+    const name = d['Consultant Name'] || 'Unknown';
+    const specialty = d['Specialty'] || '—';
+    const sub1 = d['Sub-Specialty 1'], sub2 = d['Sub-Specialty 2'];
+    const schedule = getSchedule(d);
+    const primary = schedule[0] || {};
+    const fees = d['Fees (£)'];
+
+    const initials = name.replace(/^Dr\.?\s*/i, '').split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase();
+    const avCol = avatarColors[i % avatarColors.length];
+    const specCol = colorForSpecialty(specialty);
+
+    const subPills = [sub1, sub2].filter(Boolean).map(s => `<span class="subspecialty-pill">${escapeHtml(s)}</span>`).join('');
+
+    return `
+    <div class="consultant-card" onclick="openModal(${d._id})">
+      <div class="card-top">
+        <div class="avatar" style="background:${avCol.bg}; color:${avCol.color};">${escapeHtml(initials)}</div>
+        <div>
+          <div class="consultant-name">${escapeHtml(name)}</div>
+          <div class="consultant-sub">${schedule.length} location${schedule.length === 1 ? '' : 's'}${fees ? ' · £' + escapeHtml(fees) : ''}</div>
+        </div>
+      </div>
+      <div class="specialty-badge" style="background:${specCol.bg}; color:${specCol.color};">${escapeHtml(specialty)}</div>
+      ${subPills ? `<div class="subspecialty-row">${subPills}</div>` : ''}
+      <div class="card-meta">
+        <div class="meta-item">
+          <div class="meta-label">Primary location</div>
+          <div class="meta-value">${escapeHtml(primary.location || '—')}</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Schedule</div>
+          <div class="meta-value">${escapeHtml(primary.day || '—')}</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span>${escapeHtml(d['PA Name'] ? 'PA: ' + d['PA Name'] : '')}</span>
+        <span class="view-more">View profile <svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg></span>
+      </div>
+    </div>`;
+  }
+
+  /* ── Modal: full profile ── */
+  function openModal(id) {
+    const d = allConsultants.find(c => c._id === id);
+    if (!d) return;
+    const name = d['Consultant Name'] || 'Unknown';
+    const initials = name.replace(/^Dr\.?\s*/i, '').split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase();
+    const avCol = avatarColors[id % avatarColors.length];
+    const specCol = colorForSpecialty(d['Specialty'] || '');
+    const schedule = getSchedule(d);
+
+    const scheduleHtml = schedule.length ? `
+      <div class="schedule-row head"><span>Location</span><span>Day / schedule</span><span>Time in</span><span>Time out</span></div>
+      ${schedule.map(s => `<div class="schedule-row">
+        <span>${escapeHtml(s.location || '—')}</span><span>${escapeHtml(s.day || '—')}</span>
+        <span>${escapeHtml(s.tin || '—')}</span><span>${escapeHtml(s.tout || '—')}</span></div>`).join('')}
+    ` : `<p style="font-size:13px;color:var(--text-secondary);">No schedule data available.</p>`;
+
+    const insurances = [d['Insurance 1'], d['Insurance 2'], d['Insurance 3']].filter(Boolean);
+
+    const yn = (field) => {
+      const v = (d[field] || '').trim().toLowerCase();
+      if (['yes', 'y', 'true'].includes(v)) return `<span class="yn-badge yn-yes">Yes</span>`;
+      if (['no', 'n', 'false'].includes(v)) return `<span class="yn-badge yn-no">No</span>`;
+      return `<span class="yn-badge yn-unknown">${escapeHtml(d[field] || '—')}</span>`;
+    };
+
+    document.getElementById('modalBox').innerHTML = `
+      <button class="modal-close" onclick="closeModal()">
+        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+      <div class="modal-header">
+        <div class="modal-avatar" style="background:${avCol.bg}; color:${avCol.color};">${escapeHtml(initials)}</div>
+        <div>
+          <div class="modal-name">${escapeHtml(name)}</div>
+          <div class="specialty-badge" style="background:${specCol.bg}; color:${specCol.color}; margin-top:6px;">${escapeHtml(d['Specialty'] || '—')}</div>
+        </div>
+      </div>
+
+      ${(d['Sub-Specialty 1'] || d['Sub-Specialty 2']) ? `
+      <div class="modal-section">
+        <div class="modal-section-title">Sub-specialties</div>
+        <div class="subspecialty-row">
+          ${[d['Sub-Specialty 1'], d['Sub-Specialty 2']].filter(Boolean).map(s => `<span class="subspecialty-pill">${escapeHtml(s)}</span>`).join('')}
+        </div>
+      </div>` : ''}
+
+      <div class="modal-section">
+        <div class="modal-section-title">Clinic schedule</div>
+        ${scheduleHtml}
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Fees & consultation</div>
+        <div class="info-grid">
+          <div class="info-item"><div class="info-label">Fees</div><div class="info-value">${d['Fees (£)'] ? '£' + escapeHtml(d['Fees (£)']) : '—'}</div></div>
+          <div class="info-item"><div class="info-label">IC duration</div><div class="info-value">${escapeHtml(d['IC Duration'] || '—')}</div></div>
+          <div class="info-item"><div class="info-label">FU duration</div><div class="info-value">${escapeHtml(d['FU Duration'] || '—')}</div></div>
+          <div class="info-item"><div class="info-label">Age restriction</div><div class="info-value">${escapeHtml(d['Age Restriction'] || '—')}</div></div>
+          <div class="info-item"><div class="info-label">Cancellation fees</div><div class="info-value">${escapeHtml(d['Cancellation Fees'] || '—')}</div></div>
+          <div class="info-item"><div class="info-label">DNA fees</div><div class="info-value">${escapeHtml(d['DNA Fees'] || '—')}</div></div>
+        </div>
+        ${d['CN Fees & when is it applied'] ? `<div class="notes-box" style="margin-top:10px;"><strong>CN fees:</strong> ${escapeHtml(d['CN Fees & when is it applied'])}</div>` : ''}
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Insurance</div>
+        <div class="subspecialty-row">${insurances.length ? insurances.map(ins => `<span class="subspecialty-pill">${escapeHtml(ins)}</span>`).join('') : '<span style="font-size:13px;color:var(--text-secondary);">No insurance data</span>'}</div>
+        ${d['Insurance - Additional Notes'] ? `<div class="notes-box" style="margin-top:10px;">${escapeHtml(d['Insurance - Additional Notes'])}</div>` : ''}
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">BPS & NHS</div>
+        <div class="info-grid">
+          <div class="info-item"><div class="info-label">Goes to BPS</div>${yn('Goes to BPS?')}</div>
+          <div class="info-item"><div class="info-label">Sees Peads at BPS</div>${yn('Does the consultant see Peads at BPS')}</div>
+          <div class="info-item"><div class="info-label">Handles NHS work</div>${yn('Do We Handle NHS Work?')}</div>
+          <div class="info-item"><div class="info-label">Reviews letters</div>${yn('Does the Consultant Need to Review the Letters?')}</div>
+        </div>
+        ${d['What NHS Work Do We Do For Them?'] ? `<div class="notes-box" style="margin-top:10px;"><strong>NHS work:</strong> ${escapeHtml(d['What NHS Work Do We Do For Them?'])}</div>` : ''}
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Booking & access</div>
+        <div class="info-grid">
+          <div class="info-item"><div class="info-label">Referral letter required</div>${yn('Mandatory Referral Letter Before Booking?')}</div>
+          <div class="info-item"><div class="info-label">Out-of-hours urgent care</div>${yn('Can Be Called Out of Clinic Hours for Urgent Care?')}</div>
+          <div class="info-item"><div class="info-label">Telephone consultations</div>${yn('Can Do Telephone Consultations?')}</div>
+          <div class="info-item"><div class="info-label">Home visits</div>${yn('Can Do Home Visits?')}</div>
+          <div class="info-item"><div class="info-label">Contact centre can book directly</div>${yn('Can Contact Centre Book Directly?')}</div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Admin contacts</div>
+        <div class="info-grid">
+          <div class="info-item"><div class="info-label">PA name</div><div class="info-value">${escapeHtml(d['PA Name'] || '—')}</div></div>
+          <div class="info-item"><div class="info-label">Admin email</div><div class="info-value">${escapeHtml(d['Admin Email'] || '—')}</div></div>
+          <div class="info-item"><div class="info-label">Admin phone</div><div class="info-value">${escapeHtml(d['Admin Phone'] || '—')}</div></div>
+          <div class="info-item"><div class="info-label">Consultant's number</div><div class="info-value">${escapeHtml(d["Consultant's Number"] || '—')}</div></div>
+        </div>
+      </div>
+    `;
+    document.getElementById('modalOverlay').classList.add('show');
+  }
+  function closeModal() { document.getElementById('modalOverlay').classList.remove('show'); }
+  function closeModalOnBg(e) { if (e.target.id === 'modalOverlay') closeModal(); }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  /* ── Auto refresh every 60s ── */
+  function startAutoRefresh() {
+    if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+    autoRefreshInterval = setInterval(() => {
+      const url = document.getElementById('csvUrl').value.trim();
+      if (url) loadFromUrl();
+    }, 60000);
+  }
+
+  /* ── UI helpers ── */
+  function setRefreshing(on) {
+    document.getElementById('refreshBtn').classList.toggle('spinning', on);
+    if (on) setSyncStatus('syncing');
+  }
+  function setSyncStatus(state) {
+    const dot = document.getElementById('syncDot');
+    const label = document.getElementById('syncLabel');
+    dot.classList.remove('live', 'error');
+    const map = {
+      live: { cls: 'live', text: 'Live' },
+      syncing: { cls: '', text: 'Syncing…' },
+      error: { cls: 'error', text: 'Error' },
+    };
+    const s = map[state] || map.live;
+    if (s.cls) dot.classList.add(s.cls);
+    label.textContent = s.text;
+  }
+  function updateTimestamp() {
+    document.getElementById('lastUpdated').textContent =
+      `Last refreshed: ${new Date().toLocaleTimeString()} — ${allConsultants.length} record(s) loaded`;
+  }
+  let toastTimer;
+  function showToast(msg, isError = false) {
+    const t = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = msg;
+    t.style.background = isError ? '#7A1F1F' : '#1A2335';
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+  }
+  function escapeHtml(str) {
+    if (str === undefined || str === null) return '';
+    return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+  }
+</script>
+
+</body>
+</html>
